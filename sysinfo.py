@@ -10,11 +10,11 @@ def get_cpu() -> str|None:
 	class CpuInfo(TypedDict):
 		model:            str |None
 		freq:             str |None
-		core:             int |None
+		socket:           int |None
+		cores_per_socket: int |None
 		threads_per_core: int |None
-		threads:          int |None
     
-	data: CpuInfo = { 'model': None, 'freq': None, 'core': None, 'threads_per_core': None }
+	data: CpuInfo = { 'model': None, 'freq': None, 'socket': None, 'cores_per_socket': None, 'threads_per_core': None }
 
 	with subprocess.Popen(['lscpu', '-J'], stdout=subprocess.PIPE, text=True) as process:
 		for d in json.load(process.stdout)['lscpu']:
@@ -31,15 +31,20 @@ def get_cpu() -> str|None:
 				data['freq'] = float(d['data'].replace(',', '.')) / 1000
 				data['freq'] = f'{data["freq"]:4.2f}GHz'
 				lazy = False
-			elif key.startswith('core(s) per socket'):
-				data['core'] = int(d['data'])
+			elif key.startswith('socket(s)'):
+				data['socket'] = int(d['data'])
 				lazy = False
-			elif key.startswith('thread(s) per core:'):
+			elif key.startswith('core(s) per socket'):
+				data['cores_per_socket'] = int(d['data'])
+				lazy = False
+			elif key.startswith('thread(s) per core'):
 				data['threads_per_core'] = int(d['data'])
 				lazy = False
 
 			if not lazy and all(v is not None for v in data.values()):
-				return f'{data["model"]} @ {data["freq"]} {data["core"]} cores {data["core"] * data["threads_per_core"]} threads'
+				cores   = data['cores_per_socket'] * data['socket']
+				threads = cores * data['threads_per_core']
+				return f'{data["model"]} @ {data["freq"]} {cores} cores {threads} threads'
 
 	return None
 
