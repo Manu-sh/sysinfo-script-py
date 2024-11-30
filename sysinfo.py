@@ -42,8 +42,8 @@ def get_cpu() -> str|None:
 				lazy = False
 
 			if not lazy and all(v is not None for v in data.values()):
-				cores   = data['cores_per_socket'] * data['sockets']
-				threads = cores * data['threads_per_core']
+				cores:   int = data['cores_per_socket'] * data['sockets']
+				threads: int = cores * data['threads_per_core']
 				return f'{data["model"]} @ {data["freq"]} {cores} cores {threads} threads'
 
 	return None
