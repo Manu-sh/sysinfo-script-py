@@ -22,18 +22,23 @@ def get_cpu() -> str|None:
 				continue
 
 			key: Final[str] = d['field'].lower()
+			lazy = True
 
 			if key.startswith('model name'):
 				data['model'] = d['data']
+				lazy = False
 			elif key.startswith('cpu max mhz'):
 				data['freq'] = float(d['data'].replace(',', '.')) / 1000
 				data['freq'] = f'{data["freq"]:4.2f}GHz'
+				lazy = False
 			elif key.startswith('core(s) per socket'):
 				data['core'] = int(d['data'])
+				lazy = False
 			elif key.startswith('thread(s) per core:'):
 				data['threads_per_core'] = int(d['data'])
+				lazy = False
 
-			if all(v is not None for v in data.values()):
+			if not lazy and all(v is not None for v in data.values()):
 				return f'{data["model"]} @ {data["freq"]} {data["core"]} cores {data["core"] * data["threads_per_core"]} threads'
 
 	return None
