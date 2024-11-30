@@ -1,11 +1,20 @@
 from os import uname, uname_result
-from typing import Pattern, Any, Callable, Final
+from typing import Pattern, Any, Callable, Final, TypedDict, Optional
 from threading import Thread
 from enum import Enum
 import subprocess, json, re
 
+
 def get_cpu() -> str|None:
-	data: dict = { 'model': None, 'freq': None }
+
+	class CpuInfo(TypedDict):
+		model:            str |None
+		freq:             str |None
+		core:             int |None
+		threads_per_core: int |None
+		threads:          int |None
+    
+	data: CpuInfo = { 'model': None, 'freq': None, 'core': None, 'threads_per_core': None }
 
 	with subprocess.Popen(['lscpu', '-J'], stdout=subprocess.PIPE, text=True) as process:
 		for d in json.load(process.stdout)['lscpu']:
@@ -13,14 +22,19 @@ def get_cpu() -> str|None:
 				continue
 
 			key: Final[str] = d['field'].lower()
+
 			if key.startswith('model name'):
 				data['model'] = d['data']
 			elif key.startswith('cpu max mhz'):
 				data['freq'] = float(d['data'].replace(',', '.')) / 1000
 				data['freq'] = f'{data["freq"]:4.2f}GHz'
+			elif key.startswith('core(s) per socket'):
+				data['core'] = int(d['data'])
+			elif key.startswith('thread(s) per core:'):
+				data['threads_per_core'] = int(d['data'])
 
-			if data['model'] and data['freq']:
-				return f'{data["model"]} @ {data["freq"]}'
+			if all(v is not None for v in data.values()):
+				return f'{data["model"]} @ {data["freq"]} {data["core"]} cores {data["core"] * data["threads_per_core"]} threads'
 
 	return None
 
