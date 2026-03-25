@@ -58,7 +58,7 @@ def get_gpu() -> str | None:
 				continue
 
 			brand, model = re.findall(r'".*?"', line)[1:3]
-			brand: str = re.search(r'(NVIDIA|AMD)', brand,  re.IGNORECASE).group(1) # other brand aren't implemented yet
+			brand: str = re.search(r'(NVIDIA|AMD|INTEL)', brand,  re.IGNORECASE).group(1) # other brand aren't implemented yet
 			model: str = re.search(r'\[(.*)?\]', model).group(1)	
 			return f'{brand} {model}'
 	return None
